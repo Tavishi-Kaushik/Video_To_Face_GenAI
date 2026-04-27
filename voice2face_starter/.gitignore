@@ -1,14 +1,10 @@
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+cat > .gitignore <<'EOF'
 .venv/
 venv/
-.env
-.ipynb_checkpoints/
+__pycache__/
+*.pyc
 .DS_Store
-data/raw/
-data/processed/
-data/checkpoints/
-outputs/
-runs/
+voice2face_starter/.venv/
+voice2face_starter/data/raw/
+voice2face_starter/data/processed/
+EOF
