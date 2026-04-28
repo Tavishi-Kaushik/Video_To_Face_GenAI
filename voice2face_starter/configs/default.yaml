@@ -1,13 +1,13 @@
 seed: 42
 
 data:
-  csv_path: data/processed/pairs.csv
+  train_csv: data/processed/grid/manifests/train.csv
+  val_csv: data/processed/grid/manifests/val.csv
   image_size: 64
   n_mels: 80
   max_frames: 128
   batch_size: 32
   num_workers: 2
-  val_split: 0.1
 
 model:
   audio_embedding_dim: 128
@@ -19,7 +19,7 @@ train:
   epochs: 20
   learning_rate: 0.0002
   beta_kl: 0.001
-  device: cuda
+  device: cpu
   checkpoint_dir: data/checkpoints
   sample_dir: outputs/samples
   log_every: 50
