@@ -8,17 +8,20 @@ class ImageEncoder(nn.Module):
         self.features = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=4, stride=2, padding=1),
             nn.ReLU(inplace=True),
+
             nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
+
             nn.Conv2d(64, 128, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(128),
             nn.ReLU(inplace=True),
+
             nn.Conv2d(128, 256, kernel_size=4, stride=2, padding=1),
             nn.BatchNorm2d(256),
             nn.ReLU(inplace=True),
         )
-        self.flatten_dim = 256 * 4 * 4
+        self.flatten_dim = 256 * 8 * 8
         self.mu = nn.Linear(self.flatten_dim, latent_dim)
         self.logvar = nn.Linear(self.flatten_dim, latent_dim)
 

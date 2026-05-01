@@ -11,7 +11,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def extract_middle_frame(video_path: Path, output_image_path: Path, image_size: int = 64) -> bool:
+def extract_middle_frame(video_path: Path, output_image_path: Path, image_size: int = 128) -> bool:
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         return False
@@ -29,14 +29,25 @@ def extract_middle_frame(video_path: Path, output_image_path: Path, image_size: 
     if not ok or frame is None:
         return False
 
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    frame = cv2.resize(frame, (image_size, image_size))
-    frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+    h, w = frame.shape[:2]
+
+    # tighter center crop so the face occupies more of the image
+    side = int(min(h, w) * 0.65)
+    cy, cx = h // 2, w // 2
+    y0 = max(0, cy - side // 2)
+    x0 = max(0, cx - side // 2)
+    y1 = min(h, y0 + side)
+    x1 = min(w, x0 + side)
+
+    crop = frame[y0:y1, x0:x1]
+
+    crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+    crop = cv2.resize(crop, (image_size, image_size), interpolation=cv2.INTER_CUBIC)
+    crop = cv2.cvtColor(crop, cv2.COLOR_RGB2BGR)
 
     output_image_path.parent.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(output_image_path), frame)
+    cv2.imwrite(str(output_image_path), crop)
     return True
-
 
 def compute_mel(wav_path: Path, sample_rate: int = 16000, n_mels: int = 80) -> np.ndarray:
     audio, sr = librosa.load(str(wav_path), sr=sample_rate)

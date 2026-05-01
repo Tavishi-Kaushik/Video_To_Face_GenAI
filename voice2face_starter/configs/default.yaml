@@ -3,7 +3,7 @@ seed: 42
 data:
   train_csv: data/processed/grid/manifests/train.csv
   val_csv: data/processed/grid/manifests/val.csv
-  image_size: 64
+  image_size: 128
   n_mels: 80
   max_frames: 128
   batch_size: 32
