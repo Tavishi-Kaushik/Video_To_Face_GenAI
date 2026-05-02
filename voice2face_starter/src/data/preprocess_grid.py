@@ -31,19 +31,44 @@ def extract_middle_frame(video_path: Path, output_image_path: Path, image_size: 
 
     h, w = frame.shape[:2]
 
-    # tighter center crop so the face occupies more of the image
-    side = int(min(h, w) * 0.65)
-    cy, cx = h // 2, w // 2
-    y0 = max(0, cy - side // 2)
-    x0 = max(0, cx - side // 2)
-    y1 = min(h, y0 + side)
-    x1 = min(w, x0 + side)
+    # face detector
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    face_cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    )
+    faces = face_cascade.detectMultiScale(
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(40, 40),
+    )
 
-    crop = frame[y0:y1, x0:x1]
+    if len(faces) > 0:
+        # use the largest detected face
+        x, y, fw, fh = max(faces, key=lambda b: b[2] * b[3])
 
-    crop = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+        # add margin around the face
+        cx = x + fw // 2
+        cy = y + fh // 2
+        side = int(max(fw, fh) * 1.8)
+
+        x0 = max(0, cx - side // 2)
+        y0 = max(0, cy - side // 2)
+        x1 = min(w, x0 + side)
+        y1 = min(h, y0 + side)
+
+        crop = frame[y0:y1, x0:x1]
+    else:
+        # fallback: tighter center crop
+        side = int(min(h, w) * 0.55)
+        cy, cx = h // 2, w // 2
+        y0 = max(0, cy - side // 2)
+        x0 = max(0, cx - side // 2)
+        y1 = min(h, y0 + side)
+        x1 = min(w, x0 + side)
+        crop = frame[y0:y1, x0:x1]
+
     crop = cv2.resize(crop, (image_size, image_size), interpolation=cv2.INTER_CUBIC)
-    crop = cv2.cvtColor(crop, cv2.COLOR_RGB2BGR)
 
     output_image_path.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(output_image_path), crop)

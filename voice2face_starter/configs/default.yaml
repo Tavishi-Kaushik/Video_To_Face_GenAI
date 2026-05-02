@@ -1,12 +1,12 @@
 seed: 42
 
 data:
-  train_csv: data/processed/grid/manifests/train.csv
-  val_csv: data/processed/grid/manifests/val.csv
+  train_csv: data/processed/grid_single/manifests/train.csv
+  val_csv: data/processed/grid_single/manifests/val.csv
   image_size: 128
   n_mels: 80
   max_frames: 128
-  batch_size: 32
+  batch_size: 16
   num_workers: 2
 
 model:
