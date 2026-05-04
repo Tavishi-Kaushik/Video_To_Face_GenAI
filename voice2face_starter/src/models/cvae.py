@@ -36,7 +36,7 @@ class ConditionalVAE(nn.Module):
 
 
 def cvae_loss(recon, target, mu, logvar, beta: float = 0.001):
-    recon_loss = F.mse_loss(recon, target, reduction="mean")
+    recon_loss = F.l1_loss(recon, target, reduction="mean")
     kl = -0.5 * torch.mean(1 + logvar - mu.pow(2) - logvar.exp())
     total = recon_loss + beta * kl
     return total, {"recon_loss": recon_loss.item(), "kl_loss": kl.item()}
