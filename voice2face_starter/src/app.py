@@ -9,28 +9,58 @@ from models.cvae import ConditionalVAE
 from utils.io import load_yaml
 
 
-CFG_PATH = "configs/default.yaml"
-CKPT_PATH = "data/checkpoints/best.pt"
+MODEL_OPTIONS = {
+    "Single-speaker": {
+        "config": "configs/single_speaker.yaml",
+        "checkpoint": "data/checkpoints_single/best.pt",
+    },
+    "Multi-speaker": {
+        "config": "configs/multi_speaker.yaml",
+        "checkpoint": "data/checkpoints_multi/best.pt",
+    },
+}
 
-cfg = load_yaml(CFG_PATH)
-device = torch.device(
-    "cuda" if torch.cuda.is_available() and cfg["train"]["device"] == "cuda" else "cpu"
-)
+_loaded_models = {}
 
-model = ConditionalVAE(
-    latent_dim=cfg["model"]["latent_dim"],
-    audio_embedding_dim=cfg["model"]["audio_embedding_dim"],
-).to(device)
 
-checkpoint_loaded = False
-if Path(CKPT_PATH).exists():
-    checkpoint = torch.load(CKPT_PATH, map_location=device)
+def load_model_bundle(model_choice: str):
+    if model_choice in _loaded_models:
+        return _loaded_models[model_choice]
+
+    paths = MODEL_OPTIONS[model_choice]
+    cfg_path = paths["config"]
+    ckpt_path = paths["checkpoint"]
+
+    if not Path(cfg_path).exists():
+        raise gr.Error(f"Config not found: {cfg_path}")
+
+    if not Path(ckpt_path).exists():
+        raise gr.Error(f"Checkpoint not found: {ckpt_path}. Train this model first.")
+
+    cfg = load_yaml(cfg_path)
+    device = torch.device(
+        "cuda" if torch.cuda.is_available() and cfg["train"]["device"] == "cuda" else "cpu"
+    )
+
+    model = ConditionalVAE(
+        latent_dim=cfg["model"]["latent_dim"],
+        audio_embedding_dim=cfg["model"]["audio_embedding_dim"],
+    ).to(device)
+
+    checkpoint = torch.load(ckpt_path, map_location=device)
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
-    checkpoint_loaded = True
+
+    bundle = {
+        "cfg": cfg,
+        "device": device,
+        "model": model,
+    }
+    _loaded_models[model_choice] = bundle
+    return bundle
 
 
-def preprocess_audio(audio_path: str):
+def preprocess_audio(audio_path: str, cfg, device):
     waveform, sr = load_audio(audio_path)
     mel = waveform_to_mel(
         waveform,
@@ -58,32 +88,41 @@ def tensor_to_image(image_tensor: torch.Tensor):
     return image
 
 
-def generate_faces(audio_path):
-    if not checkpoint_loaded:
-        raise gr.Error("No checkpoint found. Train the model first.")
-
+def generate_faces(audio_path, model_choice):
     if audio_path is None:
         raise gr.Error("Please upload an audio file.")
 
-    mel = preprocess_audio(audio_path)
+    bundle = load_model_bundle(model_choice)
+    cfg = bundle["cfg"]
+    device = bundle["device"]
+    model = bundle["model"]
+
+    mel = preprocess_audio(audio_path, cfg, device)
 
     outputs = []
     with torch.no_grad():
         for i in range(3):
             image = model.generate(mel)
-            outputs.append((tensor_to_image(image), f"Generated sample {i+1}"))
+            outputs.append((tensor_to_image(image), f"{model_choice} sample {i + 1}"))
 
     return outputs
 
 
 demo = gr.Interface(
     fn=generate_faces,
-    inputs=gr.Audio(type="filepath", label="Upload a speech clip (.wav)"),
+    inputs=[
+        gr.Audio(type="filepath", label="Upload a speech clip (.wav)"),
+        gr.Dropdown(
+            choices=list(MODEL_OPTIONS.keys()),
+            value="Single-speaker",
+            label="Model version",
+        ),
+    ],
     outputs=gr.Gallery(label="Generated Faces", columns=3, rows=1, height="auto"),
     title="Voice2Face Demo",
     description=(
-        "Upload a speech clip and the trained CVAE will generate plausible face images "
-        "conditioned on the voice. This demo shows 3 sampled outputs for the same audio."
+        "Upload a speech clip and choose either the single-speaker or multi-speaker model. "
+        "The app generates 3 face samples conditioned on the voice input."
     ),
 )
 
