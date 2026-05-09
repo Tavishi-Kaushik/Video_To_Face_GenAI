@@ -1,0 +1,20 @@
+# Ignore large dataset/generated files
+data/
+outputs/final_samples_multi_nb/
+outputs/final_samples_single_nb/
+outputs/samples_multi/
+outputs/samples_single/
+
+# Model/checkpoint/media files
+*.pt
+*.pth
+*.mp4
+*.mpg
+*.wav
+*.npy
+
+# Python/Jupyter
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+.DS_Store
