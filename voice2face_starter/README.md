@@ -1,3 +1,6 @@
+# NOTE: PLEASE REVIEW FINAL SUBMISSION AUDIO TO FACE GENERATION Folder for final submission
+
+
 # Voice2Face: Generating Faces from Speech
 
 Voice2Face is a course project that explores whether a model can generate a plausible face image from a speech clip alone. The core system uses a **Conditional Variational Autoencoder (CVAE)**: audio is converted into a mel-spectrogram, encoded into a voice representation, and used to generate a face image conditioned on the speech input.
